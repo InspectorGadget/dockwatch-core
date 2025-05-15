@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/InspectorGadget/dockwatch-core/structs"
@@ -55,18 +57,15 @@ func FetchContainers() ([]structs.Container, error) {
 		reader.Body.Close()
 
 		// Calculate CPU usage
-		var cpuPercent float64
-		cpuDelta := float64(stat.CPUStats.CPUUsage.TotalUsage - stat.PreCPUStats.CPUUsage.TotalUsage)
-		systemDelta := float64(stat.CPUStats.SystemUsage - stat.PreCPUStats.SystemUsage)
-
-		if systemDelta > 0 && cpuDelta > 0 {
-			cpuPercent = (cpuDelta / systemDelta) * 100.0
+		cmd := exec.Command("docker", "stats", "--no-stream", "--format", "{{.CPUPerc}}", container.ID)
+		output, err := cmd.Output()
+		if err != nil {
+			log.Println("Failed to get CPU usage:", err)
+			continue
 		}
-
-		// Fallback: Use simplified estimation (less accurate, but safer)
-		if stat.CPUStats.CPUUsage.TotalUsage > 0 {
-			cpuPercent = float64(stat.CPUStats.CPUUsage.TotalUsage) / float64(stat.CPUStats.SystemUsage) * 100.0
-		}
+		cpuPercentStr := strings.TrimSpace(string(output))
+		cpuPercentStr = strings.TrimSuffix(cpuPercentStr, "%")
+		cpuPercent, _ := strconv.ParseFloat(cpuPercentStr, 64)
 
 		// Calculate Memory
 		memUsage := float64(stat.MemoryStats.Usage) / (1024 * 1024)
