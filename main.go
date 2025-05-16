@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/InspectorGadget/dockwatch-core/controllers"
 	"github.com/InspectorGadget/dockwatch-core/docker"
@@ -12,7 +13,7 @@ func init() {
 	err := docker.ConnectToDockerSock()
 	if err != nil {
 		fmt.Println(fmt.Errorf("an error has occurred: %v", err.Error()))
-		return
+		os.Exit(1)
 	}
 
 	defer docker.GetClient().Close()

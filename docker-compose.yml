@@ -4,5 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      - DOCKWATCH_DOCKER_HOST=unix:///var/run/docker.sock
     ports:
       - "8080:8080"

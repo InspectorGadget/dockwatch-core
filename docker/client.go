@@ -20,7 +20,15 @@ import (
 var dockerClient *client.Client
 
 func ConnectToDockerSock() error {
-	client, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	config, err := GetConfig()
+	if err != nil {
+		return errors.New("unable to open config file")
+	}
+
+	client, err := client.NewClientWithOpts(
+		client.WithHost(config.DOCKER_HOST),
+		client.WithAPIVersionNegotiation(),
+	)
 	if err != nil {
 		return errors.New(err.Error())
 	}

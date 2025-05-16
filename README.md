@@ -16,8 +16,15 @@ DockWatch has to be paird with the [DockWatch Frontend](https://github.com/Inspe
     git clone git@github.com:InspectorGadget/dockwatch-core.git
     cd dockwatch-core
     ```
-2. Run the docker-compose command to start the application:
+2. Review the environment variables in the `docker-compose.yml` file. You can customize the configuration as needed.
+    - Alternatively, you can create a `config.json` file in the root directory with the following structure:
+        ```json
+        {
+            "DOCKER_HOST": "unix:///var/run/docker.sock"
+        }
+        ```
+3. Run the docker-compose command to start the application:
    ```bash
     docker-compose up -d
     ```
-3. Access the WebSocket at `http://localhost:8080/socket`.
+4. Access the WebSocket at `http://localhost:8080/socket`.
