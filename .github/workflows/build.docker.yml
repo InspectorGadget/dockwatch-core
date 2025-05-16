@@ -22,7 +22,6 @@ jobs:
           images: ${{ secrets.DOCKER_USERNAME }}/dockwatch-core
           tags: |
             type=ref,event=branch
-            type=sha
             type=semver,pattern={{version}}
             type=raw,value={{github.ref_name}}
       - name: Build and push Docker image
