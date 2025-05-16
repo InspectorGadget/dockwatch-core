@@ -38,6 +38,6 @@ func WSHandler(c *gin.Context) {
 			break
 		}
 
-		time.Sleep(2 + time.Second)
+		time.Sleep(1 + time.Second)
 	}
 }

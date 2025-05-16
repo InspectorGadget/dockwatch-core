@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/InspectorGadget/dockwatch-core/structs"
 	"github.com/docker/docker/api/types/container"
@@ -31,6 +32,22 @@ func ConnectToDockerSock() error {
 
 func GetClient() *client.Client {
 	return dockerClient
+}
+
+func calculateCPUPercent(containerID string, ch chan<- float64, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	cmd := exec.Command("docker", "stats", "--no-stream", "--format", "{{.CPUPerc}}", containerID)
+	output, err := cmd.Output()
+	if err != nil {
+		log.Println("Failed to get CPU usage:", err)
+		return
+	}
+	cpuPercentStr := strings.TrimSpace(string(output))
+	cpuPercentStr = strings.TrimSuffix(cpuPercentStr, "%")
+	cpuPercent, _ := strconv.ParseFloat(cpuPercentStr, 64)
+
+	ch <- cpuPercent
 }
 
 func FetchContainers() ([]structs.Container, error) {
@@ -56,16 +73,21 @@ func FetchContainers() ([]structs.Container, error) {
 		}
 		reader.Body.Close()
 
-		// Calculate CPU usage
-		cmd := exec.Command("docker", "stats", "--no-stream", "--format", "{{.CPUPerc}}", container.ID)
-		output, err := cmd.Output()
-		if err != nil {
-			log.Println("Failed to get CPU usage:", err)
-			continue
+		// Calculate CPU usage - using a separate channel for each container
+		ch := make(chan float64, 1)
+		var wg sync.WaitGroup
+
+		wg.Add(1)
+		go calculateCPUPercent(container.ID, ch, &wg)
+
+		// Wait for the goroutine to finish before closing the channel
+		wg.Wait()
+		close(ch)
+
+		var cpuPercent float64
+		for percent := range ch {
+			cpuPercent = percent
 		}
-		cpuPercentStr := strings.TrimSpace(string(output))
-		cpuPercentStr = strings.TrimSuffix(cpuPercentStr, "%")
-		cpuPercent, _ := strconv.ParseFloat(cpuPercentStr, 64)
 
 		// Calculate Memory
 		memUsage := float64(stat.MemoryStats.Usage) / (1024 * 1024)
