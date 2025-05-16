@@ -1,9 +1,8 @@
 services:
   dockwatch:
     container_name: backend
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: inspectorgadget12/dockwatch-core:latest
+    restart: always
     environment:
       - DOCKWATCH_DOCKER_HOST=unix:///var/run/docker.sock
     ports:
